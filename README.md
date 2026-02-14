@@ -10,7 +10,7 @@ Análise avançada dos gastos públicos federais brasileiros utilizando **Snowfl
 
 ### 📊 Evolução do Projeto
 
-Este projeto é uma **evolução significativa** da [versão inicial](link-do-repo-antigo) criada em 2021. 
+Este projeto é uma **evolução significativa** da [versão inicial](https://github.com/marciomichelotto/analise-gastos-governo) criada quando estava iniciando em análise de dados. 
 
 #### Comparação V1 vs V2:
 
