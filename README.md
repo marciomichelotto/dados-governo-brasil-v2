@@ -79,7 +79,7 @@ python scripts/analise_ministerios.py
 
 ## 👨‍💻 Autor
 
-**Márcio** - Analista de Dados  
+**Márcio** - Engenheiro de Dados  
 📧 Email: marciomichelotto@gmail.com  
 💼 LinkedIn: www.linkedin.com/in/marciomichelotto-dados
 
