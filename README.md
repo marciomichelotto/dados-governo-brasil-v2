@@ -123,5 +123,5 @@ MIT License - veja [LICENSE](LICENSE) para detalhes.
 
 ### 🔄 Versões do Projeto
 
-- **V1 (2025):** [dados-governo-brasil-v1]([link-repo-antigo](https://github.com/marciomichelotto/analise-gastos-governo)) - Análise básica com CSV e Power BI
+- **V1 (2025):** [versão inicial](https://github.com/marciomichelotto/analise-gastos-governo) - Análise básica com CSV e Power BI
 - **V2 (2026):** Este repositório - Análise avançada com Snowflake
