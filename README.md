@@ -42,33 +42,59 @@ Este projeto é uma **evolução significativa** da [versão inicial](https://gi
 - **SQL:** Queries complexas para agregação
 - **Versionamento:** Git/GitHub
 
-## 📂 Estrutura do Projeto
+## 📂 Estrutura dos Dados
+
+### Database no Snowflake:
 ```
-├── snowflake/          # Scripts SQL do Snowflake
-├── scripts/            # Scripts Python de análise
-├── notebooks/          # Jupyter notebooks exploratórios
-├── relatorios/         # Relatórios em Markdown
-├── visualizacoes/      # Gráficos e dashboards
-└── docs/               # Documentação técnica
+DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
 ```
 
-## 🚀 Como Usar
+### Colunas principais:
+- `MES_ANO` - Mês/ano da despesa
+- `ORGAO_SUPERIOR` - Órgão responsável
+- `ORGAO_ENTIDADE_VINCULADA` - Entidade vinculada
+- `VALOR_EMPENHADO` - Valor comprometido
+- `VALOR_LIQUIDADO` - Valor reconhecido como obrigação
+- `VALOR_PAGO` - Valor efetivamente pago
+- `VALOR_RESTOS_PAGAR_PAGOS` - Pagamento de restos de exercícios anteriores
 
-### Pré-requisitos
-```bash
-pip install -r requirements.txt
+## 🔍 Queries SQL Utilizadas
+
+### Listar órgãos não-ministeriais:
+```sql
+SELECT DISTINCT ORGAO_SUPERIOR
+FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+WHERE ORGAO_SUPERIOR NOT LIKE '%Ministério%'
+ORDER BY ORGAO_SUPERIOR;
 ```
 
-### Executar Análises
-```bash
-# Backup dos dados do Snowflake
-python scripts/backup_snowflake.py
+### Análise consolidada por órgão:
+```sql
+SELECT 
+    ORGAO_SUPERIOR,
+    COUNT(*) AS TOTAL_REGISTROS,
+    SUM(VALOR_EMPENHADO) AS TOTAL_EMPENHADO,
+    SUM(VALOR_LIQUIDADO) AS TOTAL_LIQUIDADO,
+    SUM(VALOR_PAGO) AS TOTAL_PAGO,
+    SUM(VALOR_RESTOS_PAGAR_PAGOS) AS TOTAL_RESTOS_PAGAR
+FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+WHERE ORGAO_SUPERIOR NOT LIKE '%Ministério%'
+GROUP BY ORGAO_SUPERIOR
+ORDER BY TOTAL_EMPENHADO DESC;
+```
 
-# Análise de órgãos não-ministeriais
-python scripts/analise_orgaos.py
-
-# Análise de ministérios
-python scripts/analise_ministerios.py
+### Evolução temporal mensal:
+```sql
+SELECT 
+    ORGAO_SUPERIOR,
+    MES_ANO,
+    SUM(VALOR_EMPENHADO) AS EMPENHADO_MES,
+    SUM(VALOR_LIQUIDADO) AS LIQUIDADO_MES,
+    SUM(VALOR_PAGO) AS PAGO_MES
+FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+WHERE ORGAO_SUPERIOR NOT LIKE '%Ministério%'
+GROUP BY ORGAO_SUPERIOR, MES_ANO
+ORDER BY ORGAO_SUPERIOR, MES_ANO;
 ```
 
 ## 📈 Principais Descobertas
