@@ -14,7 +14,7 @@ Este projeto é uma **evolução significativa** da [versão inicial](link-do-re
 
 #### Comparação V1 vs V2:
 
-| Aspecto | V1 (2021) | V2 (2024-2025) |
+| Aspecto | V1 (2025) | V2 (2026) |
 |---------|-----------|----------------|
 | **Armazenamento** | CSV local (500 MB) | Snowflake Cloud (escalável) |
 | **Processamento** | Pandas (memória limitada) | Snowflake SQL (massivo) |
