@@ -205,3 +205,24 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Adicione ao final do arquivo:
+
+# Dados e backups
+*.csv
+*.xlsx
+*.parquet
+*.db
+*.sqlite
+data/*.csv
+data/*.parquet
+
+# Credenciais
+.env
+config.ini
+snowflake_config.py
+
+# Outros
+*.log
+backup/
+temp/
