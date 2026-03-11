@@ -51,6 +51,17 @@ python pipeline/csv_to_sqlserver_pipeline.py \
 - `--chunksize`: linhas por lote (default: `1000`).
 - `--keep-duplicates`: mantém duplicatas (por padrão, remove).
 
+
+## SQL para Snowflake (DESPESAS_ORGAO)
+
+Incluímos um script SQL consolidado para criação da tabela, carga, validações e análises:
+
+- `docs/snowflake_despesas_orgao.sql`
+
+Também adicionamos sugestões de leitura de negócio e evolução técnica:
+
+- `docs/insights_despesas_orgao.md`
+
 ## Observações
 
 - Para grandes volumes, ajuste `--chunksize` conforme CPU/memória/rede.

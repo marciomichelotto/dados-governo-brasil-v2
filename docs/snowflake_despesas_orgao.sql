@@ -1,0 +1,226 @@
+-- =============================================================
+-- Dados Governo Brasil v2 | Estudo de caso: DESPESAS_ORGAO
+-- Banco alvo: Snowflake
+-- =============================================================
+
+-- 0) Contexto (ajuste se necessário)
+USE DATABASE DADOS_GOV;
+USE SCHEMA MINISTERIOS;
+
+-- =============================================================
+-- 1) Tabela base
+-- =============================================================
+CREATE OR REPLACE TABLE DESPESAS_ORGAO (
+    MES_ANO                      VARCHAR(20),
+    ORGAO_SUPERIOR               VARCHAR(255),
+    ORGAO_ENTIDADE_VINCULADA     VARCHAR(255),
+    VALOR_EMPENHADO              NUMBER(38, 2),
+    VALOR_LIQUIDADO              NUMBER(38, 2),
+    VALOR_PAGO                   NUMBER(38, 2),
+    VALOR_RESTOS_PAGAR_PAGOS     NUMBER(38, 2)
+)
+COMMENT = 'Tabela para estudo de caso de dados públicos do Governo Federal';
+
+-- =============================================================
+-- 2) Carga recomendada (versão final e robusta)
+-- Observação: use UTF8 ou ISO-8859-1 conforme encoding real do arquivo.
+-- =============================================================
+COPY INTO DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+FROM (
+  SELECT
+    $1 AS MES_ANO,
+    $2 AS ORGAO_SUPERIOR,
+    $3 AS ORGAO_ENTIDADE_VINCULADA,
+    TO_NUMBER(REPLACE(REPLACE(REGEXP_REPLACE($4, '[[:space:]]', ''), '.', ''), ',', '.'), 38, 2) AS VALOR_EMPENHADO,
+    TO_NUMBER(REPLACE(REPLACE(REGEXP_REPLACE($5, '[[:space:]]', ''), '.', ''), ',', '.'), 38, 2) AS VALOR_LIQUIDADO,
+    TO_NUMBER(REPLACE(REPLACE(REGEXP_REPLACE($6, '[[:space:]]', ''), '.', ''), ',', '.'), 38, 2) AS VALOR_PAGO,
+    TO_NUMBER(REPLACE(REPLACE(REGEXP_REPLACE($7, '[[:space:]]', ''), '.', ''), ',', '.'), 38, 2) AS VALOR_RESTOS_PAGAR_PAGOS
+  FROM @DADOS_PUBLICOS/despesasPorOrgao.csv
+)
+FILE_FORMAT = (
+    TYPE = 'CSV'
+    FIELD_DELIMITER = ';'
+    SKIP_HEADER = 1
+    FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+    ENCODING = 'UTF8'
+)
+ON_ERROR = 'ABORT_STATEMENT';
+
+-- =============================================================
+-- 3) Validação de carga
+-- =============================================================
+SELECT COUNT(*) AS total_registros
+FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO;
+
+SELECT
+    SUM(VALOR_EMPENHADO) AS total_empenhado,
+    SUM(VALOR_PAGO) AS total_pago
+FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO;
+
+SELECT *
+FROM TABLE(VALIDATE(DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO, JOB_ID => '_LAST'));
+
+-- =============================================================
+-- 4) View analítica com KPIs
+-- =============================================================
+CREATE OR REPLACE VIEW DADOS_GOV.MINISTERIOS.VW_KPI_MINISTERIOS_ESTRATEGICOS AS
+SELECT
+    MES_ANO,
+    SUBSTR(MES_ANO, 4, 4) AS ANO,
+    SUBSTR(MES_ANO, 1, 2) AS MES,
+    CASE
+        WHEN ORGAO_SUPERIOR LIKE '%Saúde%' THEN 'SAÚDE'
+        WHEN ORGAO_SUPERIOR LIKE '%Educação%' THEN 'EDUCAÇÃO'
+        WHEN ORGAO_SUPERIOR LIKE '%Defesa%' THEN 'DEFESA'
+        WHEN ORGAO_SUPERIOR LIKE '%Justiça%' OR ORGAO_SUPERIOR LIKE '%Segurança%' THEN 'SEGURANÇA'
+        ELSE 'OUTROS'
+    END AS PILAR_ESTRATEGICO,
+    ORGAO_SUPERIOR,
+    ORGAO_ENTIDADE_VINCULADA,
+    VALOR_EMPENHADO,
+    VALOR_LIQUIDADO,
+    VALOR_PAGO,
+    VALOR_RESTOS_PAGAR_PAGOS,
+    ROUND(
+      (VALOR_RESTOS_PAGAR_PAGOS / NULLIF(VALOR_PAGO + VALOR_RESTOS_PAGAR_PAGOS, 0)) * 100,
+      2
+    ) AS PCT_RESTOS_PAGAR
+FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO;
+
+-- =============================================================
+-- 5) Consultas principais de negócio
+-- =============================================================
+
+-- 5.1 Ranking por pilar estratégico (sem OUTROS)
+WITH BASE AS (
+  SELECT
+      CASE
+          WHEN ORGAO_SUPERIOR LIKE '%Saúde%' THEN 'SAÚDE'
+          WHEN ORGAO_SUPERIOR LIKE '%Educação%' THEN 'EDUCAÇÃO'
+          WHEN ORGAO_SUPERIOR LIKE '%Defesa%' THEN 'DEFESA'
+          WHEN ORGAO_SUPERIOR LIKE '%Justiça%' OR ORGAO_SUPERIOR LIKE '%Segurança%' THEN 'SEGURANÇA'
+          ELSE 'OUTROS'
+      END AS PILAR_ESTRATEGICO,
+      VALOR_EMPENHADO,
+      VALOR_PAGO
+  FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+)
+SELECT
+    PILAR_ESTRATEGICO,
+    SUM(VALOR_EMPENHADO) AS TOTAL_EMPENHADO,
+    SUM(VALOR_PAGO) AS TOTAL_PAGO,
+    COUNT(*) AS QTD_REGISTROS
+FROM BASE
+WHERE PILAR_ESTRATEGICO <> 'OUTROS'
+GROUP BY PILAR_ESTRATEGICO
+ORDER BY TOTAL_PAGO DESC;
+
+-- 5.2 Composição do desembolso (ano atual vs restos)
+WITH BASE AS (
+  SELECT
+      CASE
+          WHEN ORGAO_SUPERIOR LIKE '%Saúde%' THEN 'SAÚDE'
+          WHEN ORGAO_SUPERIOR LIKE '%Educação%' THEN 'EDUCAÇÃO'
+          WHEN ORGAO_SUPERIOR LIKE '%Defesa%' THEN 'DEFESA'
+          WHEN ORGAO_SUPERIOR LIKE '%Justiça%' OR ORGAO_SUPERIOR LIKE '%Segurança%' THEN 'SEGURANÇA'
+      END AS PILAR_ESTRATEGICO,
+      VALOR_PAGO,
+      VALOR_RESTOS_PAGAR_PAGOS
+  FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+)
+SELECT
+    PILAR_ESTRATEGICO,
+    SUM(VALOR_PAGO) AS PAGO_ANO_ATUAL,
+    SUM(VALOR_RESTOS_PAGAR_PAGOS) AS PAGO_RESTOS_ANTERIORES,
+    ROUND(
+      (SUM(VALOR_RESTOS_PAGAR_PAGOS) / NULLIF(SUM(VALOR_PAGO) + SUM(VALOR_RESTOS_PAGAR_PAGOS), 0)) * 100,
+      2
+    ) AS PERCENTUAL_DIVIDA_PASSADA
+FROM BASE
+WHERE PILAR_ESTRATEGICO IS NOT NULL
+GROUP BY PILAR_ESTRATEGICO
+ORDER BY PAGO_ANO_ATUAL DESC;
+
+-- 5.3 Série temporal por pilar
+WITH BASE AS (
+  SELECT
+      SUBSTR(MES_ANO, 4, 4) AS ANO,
+      SUBSTR(MES_ANO, 1, 2) AS MES,
+      CASE
+          WHEN ORGAO_SUPERIOR LIKE '%Saúde%' THEN 'SAÚDE'
+          WHEN ORGAO_SUPERIOR LIKE '%Educação%' THEN 'EDUCAÇÃO'
+          WHEN ORGAO_SUPERIOR LIKE '%Defesa%' THEN 'DEFESA'
+          WHEN ORGAO_SUPERIOR LIKE '%Justiça%' OR ORGAO_SUPERIOR LIKE '%Segurança%' THEN 'SEGURANÇA'
+      END AS PILAR_ESTRATEGICO,
+      VALOR_PAGO
+  FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+)
+SELECT
+    ANO,
+    MES,
+    PILAR_ESTRATEGICO,
+    SUM(VALOR_PAGO) AS TOTAL_PAGO
+FROM BASE
+WHERE PILAR_ESTRATEGICO IS NOT NULL
+GROUP BY ANO, MES, PILAR_ESTRATEGICO
+ORDER BY ANO, MES, PILAR_ESTRATEGICO;
+
+-- 5.4 Top 10 unidades por pagamento
+WITH BASE AS (
+  SELECT
+      ORGAO_ENTIDADE_VINCULADA AS UNIDADE,
+      CASE
+          WHEN ORGAO_SUPERIOR LIKE '%Saúde%' THEN 'SAÚDE'
+          WHEN ORGAO_SUPERIOR LIKE '%Educação%' THEN 'EDUCAÇÃO'
+          WHEN ORGAO_SUPERIOR LIKE '%Defesa%' THEN 'DEFESA'
+          WHEN ORGAO_SUPERIOR LIKE '%Justiça%' OR ORGAO_SUPERIOR LIKE '%Segurança%' THEN 'SEGURANÇA'
+      END AS PILAR,
+      VALOR_PAGO
+  FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+)
+SELECT
+    UNIDADE,
+    PILAR,
+    SUM(VALOR_PAGO) AS TOTAL_PAGO
+FROM BASE
+WHERE PILAR IS NOT NULL
+GROUP BY UNIDADE, PILAR
+ORDER BY TOTAL_PAGO DESC
+LIMIT 10;
+
+-- 5.5 Comparativo entre ministérios de referência
+SELECT
+    ORGAO_SUPERIOR,
+    SUM(VALOR_EMPENHADO) AS TOTAL_EMPENHADO,
+    SUM(VALOR_LIQUIDADO) AS TOTAL_LIQUIDADO,
+    SUM(VALOR_PAGO) AS TOTAL_PAGO,
+    SUM(VALOR_RESTOS_PAGAR_PAGOS) AS TOTAL_RESTOS,
+    ROUND((SUM(VALOR_PAGO) / NULLIF(SUM(VALOR_EMPENHADO), 0)) * 100, 2) AS TAXA_EXECUCAO,
+    ROUND((SUM(VALOR_RESTOS_PAGAR_PAGOS) / NULLIF(SUM(VALOR_PAGO), 0)) * 100, 2) AS PERCENTUAL_RESTOS
+FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+WHERE ORGAO_SUPERIOR IN (
+    '25000 - Ministério da Fazenda',
+    '33000 - Ministério da Previdência Social',
+    '36000 - Ministério da Saúde',
+    '26000 - Ministério da Educação'
+)
+GROUP BY ORGAO_SUPERIOR
+ORDER BY TOTAL_PAGO DESC;
+
+-- 5.6 Detecção de possíveis anomalias de execução
+SELECT
+    MES_ANO,
+    ORGAO_SUPERIOR,
+    ORGAO_ENTIDADE_VINCULADA,
+    VALOR_EMPENHADO AS EMPENHADO,
+    VALOR_PAGO AS PAGO,
+    VALOR_RESTOS_PAGAR_PAGOS AS RESTOS_PAGOS,
+    ROUND((VALOR_PAGO / NULLIF(VALOR_EMPENHADO, 0)) * 100, 2) AS TAXA_EXECUCAO,
+    CASE
+        WHEN (VALOR_PAGO / NULLIF(VALOR_EMPENHADO, 0)) > 1.5 THEN 'ANOMALIA_ALTA'
+        WHEN (VALOR_PAGO / NULLIF(VALOR_EMPENHADO, 0)) > 1.2 THEN 'ATENCAO'
+        WHEN VALOR_EMPENHADO < 0 THEN 'EMPENHO_NEGATIVO'
+        ELSE 'NORMAL'
+    END AS STATUS
+FROM DADOS_GOV.MINISTERIOS.DESPESAS_ORGAO
+ORDER BY TAXA_EXECUCAO DESC;
