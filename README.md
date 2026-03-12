@@ -26,6 +26,7 @@ Script principal: `pipeline/csv_to_sqlserver_pipeline.py`
    - remove linhas totalmente vazias;
    - remove duplicatas (opcional).
 3. Carrega no SQL Server com `SQLAlchemy` + `pyodbc` em lotes (`chunksize`).
+4. Registra logs de execução (leitura, limpeza e carga) com tempo total.
 
 ### Exemplo de execução
 
@@ -39,10 +40,26 @@ python pipeline/csv_to_sqlserver_pipeline.py \
   --chunksize 2000
 ```
 
+### String de conexão via variável de ambiente
+
+Para evitar exposição de credenciais no histórico do shell, você pode definir:
+
+```bash
+export DATABASE_URL="mssql+pyodbc://usuario:senha@servidor:1433/banco?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
+```
+
+E então executar sem `--connection-string`:
+
+```bash
+python pipeline/csv_to_sqlserver_pipeline.py \
+  --csv-path dados/entrada.csv \
+  --table tabela_destino
+```
+
 ### Parâmetros principais
 
 - `--csv-path`: caminho do arquivo CSV.
-- `--connection-string`: string SQLAlchemy de conexão com SQL Server.
+- `--connection-string`: string SQLAlchemy de conexão com SQL Server (opcional se `DATABASE_URL` estiver definida).
 - `--table`: tabela de destino.
 - `--schema`: schema de destino (default: `dbo`).
 - `--if-exists`: comportamento se tabela existir (`fail`, `replace`, `append`).
@@ -51,6 +68,24 @@ python pipeline/csv_to_sqlserver_pipeline.py \
 - `--chunksize`: linhas por lote (default: `1000`).
 - `--keep-duplicates`: mantém duplicatas (por padrão, remove).
 
+## Testes automatizados
+
+O projeto possui testes com `pytest` para:
+
+- limpeza de DataFrame;
+- inferência de tipos SQLAlchemy;
+- leitura de CSV com delimitador/encoding customizados;
+- validação de argumentos do pipeline.
+
+Rodar localmente:
+
+```bash
+pytest -q
+```
+
+## CI
+
+Há workflow de CI em `.github/workflows/ci.yml` executando testes em push e pull request.
 
 ## SQL para Snowflake (DESPESAS_ORGAO)
 
