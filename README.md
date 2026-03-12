@@ -1,6 +1,7 @@
 # Dados Governo Brasil v2
 
-Pipeline em Python para ler dados CSV, aplicar limpeza básica e carregar em SQL Server.
+Projeto de engenharia e análise de dados com foco em **aprendizado prático de Snowflake**,
+mantendo uma trilha complementar de ingestão em SQL Server para comparação de arquitetura e execução local.
 
 ## Requisitos
 
@@ -12,6 +13,17 @@ Instale as dependências:
 ```bash
 pip install -r requirements.txt
 ```
+
+## Estratégia do projeto (duas trilhas)
+
+Este repositório foi organizado para deixar explícitas duas trilhas:
+
+1. **Trilha de ingestão e qualidade em Python + SQL Server**
+   - objetivo: praticar leitura de CSV, limpeza, tipagem e carga em lotes.
+2. **Trilha analítica em Snowflake**
+   - objetivo: praticar modelagem SQL analítica, validações de carga e consultas de negócio em ambiente cloud.
+
+Assim, o projeto não trata Snowflake como apêndice: ele é a trilha principal de evolução analítica, enquanto o pipeline em SQL Server serve como base de engenharia e contraste técnico.
 
 ## Pipeline CSV -> SQL Server
 
@@ -104,6 +116,19 @@ Incluímos um script SQL consolidado para criação da tabela, carga, validaçõ
 Também adicionamos sugestões de leitura de negócio e evolução técnica:
 
 - `docs/insights_despesas_orgao.md`
+
+## Se sua conta trial do Snowflake expirou
+
+Você **não precisa bloquear o projeto** por causa disso. Há três caminhos práticos:
+
+1. **Continuar evoluindo localmente (sem Snowflake ativo):**
+   - mantenha o pipeline Python + SQL Server para praticar ingestão, validação e qualidade.
+2. **Usar Snowflake apenas para estudo de SQL/modelagem (sem executar):**
+   - evolua o script em `docs/snowflake_despesas_orgao.sql` e documente decisões de design.
+3. **Criar nova conta para validação end-to-end em cloud:**
+   - recomendado quando você quiser comprovar execução real de carga e performance no ambiente Snowflake.
+
+Em resumo: **nova conta é recomendada para validar execução real no Snowflake, mas não é obrigatória para continuar aprendendo e evoluindo a documentação técnica agora**.
 
 ## Observações
 

@@ -1,8 +1,9 @@
-# Arquitetura técnica do pipeline CSV → SQL Server
+# Arquitetura técnica (ingestão local + consumo analítico)
 
 ## Visão geral
 
-A arquitetura atual é orientada a execução via CLI, com foco em ingestão de um arquivo CSV, transformação leve em memória e carga em lotes para SQL Server.
+A arquitetura atual é orientada a execução via CLI, com foco em ingestão de um arquivo CSV,
+transformação leve em memória e carga em lotes para SQL Server, além de consumo analítico em Snowflake via SQL documentado.
 
 ```mermaid
 flowchart LR
@@ -12,7 +13,8 @@ flowchart LR
     D --> E[Carga em lotes\nDataFrame.to_sql + SQLAlchemy/pyodbc]
     E --> F[Tabela SQL Server\n(schema.tabela)]
     E --> G[Logs de execução\n(logging)]
-    F --> H[Consumo analítico\nSQL/Snowflake docs]
+    F --> H[Camada de consumo\nqueries analíticas]
+    H --> I[Snowflake\nscript SQL e KPIs]
 ```
 
 ## Componentes
@@ -22,6 +24,7 @@ flowchart LR
 - **Mapeamento de tipos:** inferência automática para tipos SQLAlchemy antes da persistência.
 - **Persistência:** escrita no SQL Server em batches (`--chunksize`) com políticas de existência (`--if-exists`).
 - **Observabilidade:** logs das etapas principais e tempo total da execução.
+- **Consumo analítico:** consultas e modelagem SQL orientadas ao Snowflake no estudo de caso `DESPESAS_ORGAO`.
 
 ## Limites atuais da arquitetura
 
