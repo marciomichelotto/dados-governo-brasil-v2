@@ -8,6 +8,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 from pathlib import Path
 
 import pandas as pd
@@ -29,11 +30,36 @@ def read_csv(path: Path, delimiter: str, encoding: str) -> pd.DataFrame:
     return pd.read_csv(path, sep=delimiter, encoding=encoding)
 
 
+def normalize_column_name(column_name: str) -> str:
+    """Normaliza nome de coluna para snake_case ASCII."""
+    normalized = unicodedata.normalize("NFKD", str(column_name))
+    normalized = normalized.encode("ascii", "ignore").decode("ascii")
+    normalized = normalized.strip().lower()
+    normalized = re.sub(r"[^a-z0-9]+", "_", normalized)
+    normalized = re.sub(r"_+", "_", normalized).strip("_")
+    return normalized or "coluna"
+
+
+def deduplicate_column_names(column_names: list[str]) -> list[str]:
+    """Garante nomes de coluna únicos preservando a ordem."""
+    seen: dict[str, int] = {}
+    unique_columns: list[str] = []
+
+    for column_name in column_names:
+        count = seen.get(column_name, 0) + 1
+        seen[column_name] = count
+        unique_columns.append(column_name if count == 1 else f"{column_name}_{count}")
+
+    return unique_columns
+
+
 def clean_dataframe(df: pd.DataFrame, drop_duplicates: bool = True) -> pd.DataFrame:
     """Aplica limpeza básica nos dados."""
     cleaned = df.copy()
 
-    cleaned.columns = [column.strip().lower().replace(" ", "_") for column in cleaned.columns]
+    cleaned.columns = deduplicate_column_names(
+        [normalize_column_name(column) for column in cleaned.columns]
+    )
 
     object_columns = cleaned.select_dtypes(include=["object"]).columns
     for column in object_columns:
