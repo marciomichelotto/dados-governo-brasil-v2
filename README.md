@@ -87,6 +87,14 @@ pytest -q
 
 Há workflow de CI em `.github/workflows/ci.yml` executando testes em push e pull request.
 
+## Arquitetura
+
+A documentação de arquitetura técnica do fluxo (entrada, transformação, carga e consumo) está em:
+
+- `docs/arquitetura.md`
+
+O documento também descreve os limites atuais e um roadmap técnico por horizonte (curto, médio e longo prazo).
+
 ## SQL para Snowflake (DESPESAS_ORGAO)
 
 Incluímos um script SQL consolidado para criação da tabela, carga, validações e análises:
