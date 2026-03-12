@@ -8,7 +8,9 @@ from sqlalchemy import types
 
 from pipeline.csv_to_sqlserver_pipeline import (
     clean_dataframe,
+    deduplicate_column_names,
     infer_sqlalchemy_types,
+    normalize_column_name,
     read_csv,
     validate_args,
 )
@@ -35,6 +37,30 @@ def test_clean_dataframe_preserva_duplicatas_quando_configurado() -> None:
     cleaned = clean_dataframe(df, drop_duplicates=False)
 
     assert len(cleaned) == 2
+
+
+def test_normalize_column_name_remove_acentos_e_simbolos() -> None:
+    assert normalize_column_name(" Órgão/Unidade (R$) ") == "orgao_unidade_r"
+
+
+def test_deduplicate_column_names_adiciona_sufixo_para_colisoes() -> None:
+    result = deduplicate_column_names(["valor", "valor", "valor", "data"])
+
+    assert result == ["valor", "valor_2", "valor_3", "data"]
+
+
+def test_clean_dataframe_normaliza_colunas_com_acentos_e_colisoes() -> None:
+    df = pd.DataFrame(
+        {
+            "Órgão": ["A"],
+            "Orgao": ["B"],
+            "Valor (R$)": [10],
+        }
+    )
+
+    cleaned = clean_dataframe(df, drop_duplicates=False)
+
+    assert list(cleaned.columns) == ["orgao", "orgao_2", "valor_r"]
 
 
 def test_infer_sqlalchemy_types_mapeia_tipos_basicos() -> None:
