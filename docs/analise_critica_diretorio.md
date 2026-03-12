@@ -20,16 +20,4 @@ A análise original foi útil para orientar a evolução do projeto. Desde entã
 | 8) Dados de exemplo e reprodutibilidade | ⚠️ **Parcial** | documentação melhorada; dataset de exemplo versionado pode ser reforçado |
 | 9) Arquitetura | ✅ **Aplicado** | documento dedicado em `docs/arquitetura.md` |
 
-## Este arquivo deve permanecer no GitHub?
 
-**Resposta curta:** não é obrigatório manter este arquivo exatamente como estava.
-
-### Opções recomendadas
-
-1. **Manter (recomendado) como histórico de decisão**, com o status atualizado (abordagem atual).
-2. **Mover para `docs/historico/`** se quiser separar material ativo de material retrospectivo.
-3. **Remover**, caso a equipe prefira documentação apenas operacional e sem registro de diagnóstico.
-
-## Conclusão
-
-As sugestões centrais da análise original **não estão mais “em aberto” como no texto antigo**: várias já foram implementadas total ou parcialmente. Por isso, o melhor caminho é manter este documento apenas como histórico (atualizado) ou arquivá-lo para evitar leitura desatualizada.
