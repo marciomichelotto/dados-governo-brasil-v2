@@ -72,4 +72,4 @@ WHERE VALOR_EMPENHADO > 1000000;  -- Processa no servidor
 
 ---
 
-**Conclusão:** Este projeto mostra minha evolução de **iniciante para profissional de dados** em X anos.
+**Conclusão:** Este projeto mostra minha evolução de **iniciante para profissional de dados** entre 2025 e 2026, com foco em práticas mais próximas de ambiente real.
