@@ -23,7 +23,6 @@ dados-governo-brasil-v2/
 │   │   └── 04_create_stage.sql
 │   ├── 02_tables/
 │   │   ├── 01_despesas_gov.sql
-│   │   └── 02_despesas_orgao.sql
 │   ├── 03_load/
 │   │   └── 01_copy_into_despesas.sql
 │   └── 04_views/
@@ -39,7 +38,6 @@ dados-governo-brasil-v2/
 | Database | `GOV_V2` | Banco de dados principal |
 | Schema | `GOVERNO` | Schema de despesas governamentais |
 | Table | `DESPESAS_GOV` | Despesas por órgão (3.044 registros) |
-| Table | `DESPESAS_ORGAO` | Tabela auxiliar de despesas por órgão |
 | View | `VW_BI_V2_DASHBOARD` | View analítica com KPIs e classificação de risco |
 | Stage | `GOV_STAGE` | Stage interno para ingestão de CSVs |
 | File Format | `GOV_CSV_FORMAT` | Formato CSV com `SKIP_HEADER = 1` |
