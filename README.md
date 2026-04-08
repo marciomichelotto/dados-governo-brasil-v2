@@ -1,14 +1,26 @@
-# Dados Governo Brasil V2
+# Análise de Despesas do Governo Federal com Snowflake
 
-Projeto de análise de despesas do Governo Federal do Brasil utilizando Snowflake.
+Pipeline de ingestão e análise das despesas públicas federais do Brasil, com classificação por pilar estratégico e indicadores de risco fiscal — construído inteiramente em Snowflake e SQL.
 
-## Objetivo
+## Contexto
 
-Ingestão, transformação e análise das despesas públicas por órgão do governo federal, com classificação por pilar estratégico e indicadores de risco fiscal.
+Dados públicos existem. O desafio é transformá-los em algo útil.
+
+Este projeto parte dos arquivos de despesas disponibilizados pelo Portal da Transparência e constrói uma camada analítica capaz de responder perguntas como: quais ministérios têm maior taxa de execução orçamentária? Quais acumulam restos a pagar em proporção preocupante?
 
 ## Arquitetura
 
-Portal da Transparência (CSV) -> Snowflake Stage (`@GOV_STAGE`) -> Tabela `DESPESAS_GOV` (raw) -> View `VW_BI_V2_DASHBOARD` (analytics) -> Dashboard BI
+```
+Portal da Transparência (CSV)
+        ↓
+Snowflake Stage (@GOV_STAGE)
+        ↓
+Tabela DESPESAS_GOV  ← dados brutos, 3.044 registros
+        ↓
+View VW_BI_V2_DASHBOARD  ← KPIs, classificação de risco, pilares estratégicos
+        ↓
+Dashboard BI
+```
 
 ## Estrutura do Repositório
 
@@ -22,7 +34,7 @@ dados-governo-brasil-v2/
 │   │   ├── 03_create_file_format.sql
 │   │   └── 04_create_stage.sql
 │   ├── 02_tables/
-│   │   ├── 01_despesas_gov.sql
+│   │   └── 01_despesas_gov.sql
 │   ├── 03_load/
 │   │   └── 01_copy_into_despesas.sql
 │   └── 04_views/
@@ -101,13 +113,14 @@ PUT file://despesasPorOrgao.csv @GOV_V2.GOVERNO.GOV_STAGE;
 ```
 
 3. Execute o `COPY INTO` para carregar os dados.
+
 4. A view estará disponível para consultas e dashboards.
-
-## Fonte dos Dados
-
-Portal da Transparência — Despesas do Governo Federal.
 
 ## Tecnologias
 
-- Snowflake — Data Warehouse
-- SQL — Transformação e análise
+- **Snowflake** — Data Warehouse, stage de ingestão e camada analítica
+- **SQL** — Transformação, KPIs e classificação de risco
+
+## Fonte dos Dados
+
+[Portal da Transparência — Despesas do Governo Federal](https://portaldatransparencia.gov.br/download-de-dados/despesas)
