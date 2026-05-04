@@ -1,126 +1,159 @@
-# Análise de Despesas do Governo Federal com Snowflake
+# 📊 Dados Governo Brasil v2
 
-Pipeline de ingestão e análise das despesas públicas federais do Brasil, com classificação por pilar estratégico e indicadores de risco fiscal — construído inteiramente em Snowflake e SQL.
+Pipeline de dados públicos do governo federal brasileiro — da ingestão em CSV até insights analíticos sobre **R$ 4,83 trilhões em despesas** de 36 ministérios.
 
-## Contexto
+---
 
-Dados públicos existem. O desafio é transformá-los em algo útil.
+## 🎯 Objetivo
 
-Este projeto parte dos arquivos de despesas disponibilizados pelo Portal da Transparência e constrói uma camada analítica capaz de responder perguntas como: quais ministérios têm maior taxa de execução orçamentária? Quais acumulam restos a pagar em proporção preocupante?
+Transformar dados orçamentários brutos do governo federal em informação estruturada e analisável — evidenciando padrões de execução, concentração de recursos e riscos fiscais por ministério.
 
-## Arquitetura
+Este projeto cobre o ciclo completo:
 
 ```
-Portal da Transparência (CSV)
-        ↓
-Snowflake Stage (@GOV_STAGE)
-        ↓
-Tabela DESPESAS_GOV  ← dados brutos, 3.044 registros
-        ↓
-View VW_BI_V2_DASHBOARD  ← KPIs, classificação de risco, pilares estratégicos
-        ↓
-Dashboard BI
+CSV (Portal da Transparência) → Python (limpeza + ingestão) → SQL Server → Análise SQL → Insights
 ```
 
-## Estrutura do Repositório
+---
 
-```text
+## 🔍 Principais Descobertas (Exercício 2025)
+
+### 1. Concentração Extrema de Recursos
+
+Os 3 maiores ministérios concentram **90,8% de todo o orçamento federal**.
+
+| Posição | Ministério | Pago (2025) | % do Total |
+|--------|-----------|------------|-----------|
+| 🥇 | Fazenda | R$ 2,67 trilhões | 61,2% |
+| 🥈 | Previdência Social | R$ 1,07 trilhão | 24,5% |
+| 🥉 | Saúde | R$ 224,4 bilhões | 5,1% |
+| 4º | Educação | R$ 204,9 bilhões | 4,7% |
+| 5º | Desenvolvimento Social | R$ 167,6 bilhões | 3,8% |
+
+> 💡 **Insight:** O Ministério da Fazenda não é um ministério operacional — sua função principal é gerenciar a dívida pública federal. Aproximadamente 60-67% dos seus R$ 2,67 trilhões referem-se a amortização de dívida, não a políticas públicas.
+
+---
+
+### 2. Crise de Execução: Ministérios em Colapso Orçamentário
+
+"Restos a pagar" representam dívidas de anos anteriores pagas no exercício atual. Percentuais altos indicam falha de planejamento ou incapacidade de execução.
+
+**Situação Crítica (>50% de dívidas passadas):**
+
+| Ministério | % Restos a Pagar | Status |
+|-----------|-----------------|--------|
+| Ministério das Mulheres | 64,18% | 🔴 CRÍTICO |
+| Ministério do Esporte | 62,94% | 🔴 CRÍTICO |
+| Ministério do Turismo | 60,69% | 🔴 CRÍTICO |
+| Ministério do Empreendedorismo | 53,93% | 🔴 CRÍTICO |
+
+> 💡 **Insight:** Esses ministérios operam majoritariamente para quitar dívidas antigas — com capacidade limitada para novos programas. É um ciclo vicioso: sem execução no ano, acumulam dívida; no ano seguinte, gastam o orçamento pagando o passado.
+
+---
+
+### 3. Alerta Crítico: Receita Federal com 24,43% de Execução
+
+| Métrica | Valor |
+|--------|-------|
+| Empenhado | R$ 11,7 bilhões |
+| Efetivamente Pago | R$ 2,86 bilhões |
+| Recursos Não Executados | **R$ 8,8 bilhões parados** |
+| Restos a Pagar | 16,33% |
+
+> 💡 **Insight:** A baixa execução da Receita Federal compromete diretamente sua capacidade de fiscalização e arrecadação — um problema fiscal que se retroalimenta. R$ 8,8 bilhões não executados em sistemas, fiscalização e infraestrutura representam perda de arrecadação potencial não mensurável.
+
+---
+
+### 4. Paradoxo do Tamanho: Grandes Ministérios Executam Melhor
+
+Contraintuitivamente, os maiores ministérios apresentam a **melhor** gestão orçamentária proporcional:
+
+| Ministério | Taxa de Execução | % Restos a Pagar | Avaliação |
+|-----------|-----------------|-----------------|----------|
+| Fazenda | 97,32% | 1,52% | ✅ Excelente |
+| Previdência Social | 94,36% | 5,89% | ✅ Bom |
+| Saúde | 90,23% | 10,07% | ⚠️ Aceitável |
+| Educação | 84,58% | 14,49% | ⚠️ Atenção |
+
+**Benchmarks de gestão exemplar (<5% de restos):**
+
+| Ministério | % Restos a Pagar |
+|-----------|-----------------|
+| Desenvolvimento Social | 0,77% 🏆 |
+| Fazenda | 1,49% |
+| Trabalho e Emprego | 2,76% |
+| Relações Exteriores | 3,23% |
+
+> 💡 **Insight:** O padrão de excelência existe — Desenvolvimento Social com 0,77% de restos a pagar prova que é possível. O desafio é escalar essa capacidade para ministérios menores, especialmente os de criação recente.
+
+---
+
+## 🛠️ Stack Técnica
+
+| Ferramenta | Uso |
+|-----------|-----|
+| Python (pandas + SQLAlchemy) | Limpeza, transformação e ingestão de CSVs |
+| SQL Server | Data warehouse local — armazenamento permanente |
+| Snowflake | Queries analíticas exploratórias e views consolidadas |
+| SQL | Análise, agregações e geração de indicadores |
+| Git | Versionamento |
+
+---
+
+## ⚙️ Pipeline
+
+### Estrutura
+
+```
 dados-governo-brasil-v2/
-├── README.md
-├── sql/
-│   ├── 01_setup/
-│   │   ├── 01_create_database.sql
-│   │   ├── 02_create_schema.sql
-│   │   ├── 03_create_file_format.sql
-│   │   └── 04_create_stage.sql
-│   ├── 02_tables/
-│   │   └── 01_despesas_gov.sql
-│   ├── 03_load/
-│   │   └── 01_copy_into_despesas.sql
-│   └── 04_views/
-│       └── 01_vw_bi_v2_dashboard.sql
-└── data/
-    └── despesasPorOrgao.csv
+│
+├── pipeline/
+│   └── csv_to_sqlserver_pipeline.py   # Ingestão CSV → SQL Server
+│
+├── docs/
+│   ├── snowflake_despesas_orgao.sql   # Queries analíticas
+│   └── insights_despesas_orgao.md     # Análise de negócio
+│
+├── requirements.txt
+└── README.md
 ```
 
-## Objetos Snowflake
+### O que o pipeline faz
 
-| Tipo | Nome | Descrição |
-|------|------|-----------|
-| Database | `GOV_V2` | Banco de dados principal |
-| Schema | `GOVERNO` | Schema de despesas governamentais |
-| Table | `DESPESAS_GOV` | Despesas por órgão (3.044 registros) |
-| View | `VW_BI_V2_DASHBOARD` | View analítica com KPIs e classificação de risco |
-| Stage | `GOV_STAGE` | Stage interno para ingestão de CSVs |
-| File Format | `GOV_CSV_FORMAT` | Formato CSV com `SKIP_HEADER = 1` |
+1. Lê CSV do Portal da Transparência com `pandas`
+2. Normaliza colunas para `snake_case`
+3. Remove espaços, linhas vazias e duplicatas
+4. Carrega no SQL Server via `SQLAlchemy` + `pyodbc` em lotes configuráveis
 
-## Colunas da Tabela DESPESAS_GOV
+### Execução
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| `MES_ANO` | VARCHAR(7) | Período no formato `mmm/aa` (ex: `mar/25`) |
-| `ORGAO_SUPERIOR` | VARCHAR(200) | Código e nome do órgão superior |
-| `ORGAO_ENTIDADE_VINCULADA` | VARCHAR(200) | Entidade vinculada ao órgão |
-| `VALOR_EMPENHADO` | NUMBER(38,2) | Valor empenhado (R$) |
-| `VALOR_LIQUIDADO` | NUMBER(38,2) | Valor liquidado (R$) |
-| `VALOR_PAGO` | NUMBER(38,2) | Valor efetivamente pago (R$) |
-| `VALOR_RESTOS_PAGAR_PAGOS` | NUMBER(38,2) | Restos a pagar processados (R$) |
+```bash
+pip install -r requirements.txt
 
-## KPIs da View VW_BI_V2_DASHBOARD
-
-| Indicador | Fórmula | Descrição |
-|-----------|---------|-----------|
-| `TAXA_EXECUCAO_PCT` | `VALOR_PAGO / VALOR_EMPENHADO * 100` | Taxa de execução orçamentária |
-| `PCT_RESTOS_PAGAR` | `RESTOS / (PAGO + RESTOS) * 100` | Proporção de restos a pagar |
-| `GAP_EXECUCAO` | `VALOR_PAGO - VALOR_EMPENHADO` | Diferença entre pago e empenhado |
-| `STATUS_RISCO` | Baseado em `PCT_RESTOS_PAGAR` | Classificação de risco fiscal |
-
-## Classificação de Risco (STATUS_RISCO)
-
-| Status | Condição (% Restos a Pagar) |
-|--------|----------------------------|
-| COLAPSO | > 50% |
-| RISCO | > 25% |
-| ATENÇÃO | > 10% |
-| MODERADO | > 5% |
-| EXEMPLAR | ≤ 5% |
-
-## Pilares Estratégicos
-
-Os órgãos são classificados automaticamente em pilares:
-
-- **SAÚDE** — Ministério da Saúde
-- **EDUCAÇÃO** — Ministério da Educação
-- **DEFESA** — Ministério da Defesa
-- **SEGURANÇA** — Justiça e Segurança Pública
-- **FAZENDA** — Ministério da Fazenda
-- **PREVIDÊNCIA** — Previdência Social
-- **DESENV. SOCIAL** — Desenvolvimento Social
-- **OUTROS** — Demais órgãos
-
-## Como Executar
-
-1. Execute os scripts na ordem numérica:
-
-```text
-sql/01_setup/ → sql/02_tables/ → sql/03_load/ → sql/04_views/
+python pipeline/csv_to_sqlserver_pipeline.py \
+  --csv-path dados/despesasPorOrgao.csv \
+  --connection-string "mssql+pyodbc://usuario:senha@servidor/banco?driver=ODBC+Driver+18+for+SQL+Server" \
+  --table despesas_orgao \
+  --schema dbo \
+  --if-exists replace \
+  --chunksize 2000
 ```
 
-2. Faça upload do CSV para o stage:
+---
 
-```sql
-PUT file://despesasPorOrgao.csv @GOV_V2.GOVERNO.GOV_STAGE;
-```
+## 📌 Fonte dos Dados
 
-3. Execute o `COPY INTO` para carregar os dados.
+- **Portal da Transparência do Governo Federal:** [transparencia.gov.br](https://www.transparencia.gov.br)
+- **Exercício:** 2025
+- **Escopo:** 36 ministérios — R$ 4,83 trilhões em despesas
 
-4. A view estará disponível para consultas e dashboards.
+---
 
-## Tecnologias
+## 👤 Autor
 
-- **Snowflake** — Data Warehouse, stage de ingestão e camada analítica
-- **SQL** — Transformação, KPIs e classificação de risco
+**Márcio Michelotto**
+Engenheiro & Analista de Dados | [LinkedIn](https://www.linkedin.com/in/marciomichelotto-dados) | [GitHub](https://github.com/marciomichelotto)
 
-## Fonte dos Dados
+---
 
-[Portal da Transparência — Despesas do Governo Federal](https://portaldatransparencia.gov.br/download-de-dados/despesas)
+*Projeto de análise de dados públicos — ciclo completo de engenharia e análise orçamentária.*
