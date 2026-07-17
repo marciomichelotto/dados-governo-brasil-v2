@@ -1,5 +1,7 @@
 # 📊 Dados Governo Brasil v2
 
+> **Sobre esta versão:** este projeto tem foco analítico — os principais achados de negócio sobre o orçamento federal estão aqui. Para a versão com arquitetura de engenharia de dados completa (Medallion, dbt, CI/CD), veja **[dados-governo-brasil-v3](https://github.com/marciomichelotto/dados-governo-brasil-v3)**.
+
 Pipeline de dados públicos do governo federal brasileiro — da ingestão em CSV até insights analíticos sobre **R$ 4,83 trilhões em despesas** de 36 ministérios.
 
 ---
